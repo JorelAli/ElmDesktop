@@ -4,18 +4,9 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 
-
-
 textArea : Html msg
 textArea =
   textarea [] [text "hi"]
-
-imageContent : Html msg
-imageContent = 
-  img
-    [ src "https://upload.wikimedia.org/wikipedia/commons/f/f3/Elm_logo.svg" 
-    , width 200
-    ] []
 
 calculator : Html msg
 calculator =

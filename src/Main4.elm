@@ -9,8 +9,8 @@ import Json.Decode exposing (Value)
 import Dict exposing (Dict)
 import Programs
 import Images
-
 import Arithmetic exposing (isPrime)
+import Markdown
 
 port dragstart : Value -> Cmd msg
 
@@ -47,6 +47,8 @@ type alias Model =
     { windows : Dict Int Window
     , dragDrop : DragDrop.Model Int Int
     , isPrime : Bool
+    , imageUrl : String
+    , markdown : String
     }
 
 
@@ -56,6 +58,8 @@ type Msg
     | NotHovering Int
     | KillWindow Int
     | IsPrime Int
+    | ChangeImageUrl String
+    | UpdateMarkdown String
 
 
 init : () -> (Model, Cmd msg)
@@ -63,6 +67,8 @@ init () =
     ( { windows = Dict.empty
       , dragDrop = DragDrop.init
       , isPrime = False
+      , imageUrl = "https://upload.wikimedia.org/wikipedia/commons/f/f3/Elm_logo.svg"
+      , markdown = "# Hello world\nThis is some text"
       }
     , Cmd.none
     )
@@ -118,6 +124,12 @@ update msg model =
         IsPrime int ->
           ({model | isPrime = isPrime int}, Cmd.none)
 
+        ChangeImageUrl url ->
+          ({model | imageUrl = url}, Cmd.none)
+
+        UpdateMarkdown str ->
+          ({model | markdown = str}, Cmd.none)
+
 
 
 subscriptions : Model -> Sub Msg
@@ -134,10 +146,11 @@ view model =
   div []
       ([ desktop model
        ] 
-       ++ window model 1 "ElmIcon" Programs.imageContent
+       ++ window model 1 "ImgViewer" (imageContent model.imageUrl) --//Programs.imageContent
        ++ window model 2 "Notepad" Programs.textArea
        ++ window model 3 "Calculator" Programs.calculator
        ++ window model 4 "PrimeChecker" (primeChecker model)
+       ++ window model 5 "MarkdownEditor" (markdownEditor model.markdown)
       )
 
 desktop : Model -> Html Msg
@@ -155,7 +168,7 @@ desktop model =
   ]
 
 
-window : Model -> Int -> String ->Html Msg -> List (Html Msg)
+window : Model -> Int -> String -> Html Msg -> List (Html Msg)
 window model id title content =
   if (getWindow model id).dead then []
   else 
@@ -230,6 +243,9 @@ toolbar =
       ] []
     ]
 
+
+-- Programs
+
 primeChecker : Model -> Html Msg
 primeChecker model = 
   div 
@@ -257,6 +273,44 @@ primeChecker model =
       [ text (if model.isPrime then "This is prime!" else "This is not prime")
       ]
     ]
+
+imageContent : String -> Html Msg
+imageContent url = 
+  div 
+  [ style "resize" "both"
+  , style "overflow" "auto"
+  ]
+  [ input 
+    [ placeholder "url"
+    , onInput ChangeImageUrl
+    , style "width" "100%"
+    ] 
+    []
+  , img
+    [ src url
+    , style "width" "100%"
+    -- , width 200
+    ] []
+  ]
+
+markdownEditor : String -> Html Msg
+markdownEditor md = 
+  div 
+  [ style "background-color" pastel.blue
+  , style "display" "flex"
+  , style "font-family" "Arial"
+  ] 
+  [ textarea 
+    [ placeholder md
+    , onInput UpdateMarkdown
+    ] []
+  , div 
+    [ style "margin-left" "20px"
+    , style "margin-right" "20px"
+    ] <| Markdown.toHtml Nothing md
+  ]
+
+--Main
 
 pastel = 
   { red = "#ffb3ba"
