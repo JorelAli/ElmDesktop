@@ -57,12 +57,18 @@ type alias Model =
     , windowHtmls : Windows--List (Model -> Html Msg)
     }
 
-type Windows = Windows (List (Model -> Html Msg))
+type Windows 
+  = Windows (List (Model -> Html Msg))
 
 unwrapWindow : Windows -> List (Model -> Html Msg)
 unwrapWindow w =
   case w of
     Windows list -> list
+
+type ProgramType
+  = PrimeProgram
+  | ImageViewerProgram
+
 
 type Msg
     = DragDropMsg (DragDrop.Msg Int Int)
@@ -70,6 +76,7 @@ type Msg
     | IsPrime Int
     | ChangeImageUrl String
     | UpdateMarkdown String
+    | Open ProgramType
 
 
 init : () -> (Model, Cmd msg)
@@ -83,7 +90,7 @@ init () =
         [ \model -> window model 1 "ImgViewer" (imageContent model.imageUrl)
         , \model -> window model 2 "Notepad" Programs.textArea
         , \model -> window model 3 "Calculator" Programs.calculator
-        , \model -> window model 4 "PrimeChecker" (primeChecker model)
+        -- , \model -> window model 4 "PrimeChecker" (primeChecker model)
         , \model -> window model 5 "MarkdownEditor" (markdownEditor model.markdown)
         ]
       }
@@ -134,6 +141,16 @@ update msg model =
         UpdateMarkdown str ->
           ({model | markdown = str}, Cmd.none)
 
+        Open programType ->
+          case programType of
+            PrimeProgram ->
+              ({model | windowHtmls = Windows ((unwrapWindow model.windowHtmls) ++ 
+                [\m -> window m 4 "PrimeChecker" (primeChecker m)]
+              )}, Cmd.none)
+            
+            ImageViewerProgram ->
+              (model, Cmd.none)
+
 
 
 subscriptions : Model -> Sub Msg
@@ -167,6 +184,7 @@ desktop model =
       ] 
   ] ++ List.map Html.Styled.Attributes.fromUnstyled (DragDrop.droppable DragDropMsg 1))
   [ toolbar
+  , toolbarProgram "https://upload.wikimedia.org/wikipedia/commons/f/f3/Elm_logo.svg" PrimeProgram
   ]
 
 
@@ -264,6 +282,26 @@ toolbar =
     [ img 
       [ src Images.nix
       , Html.Styled.Attributes.height 40
+      ] []
+    ]
+
+toolbarProgram : String -> ProgramType -> Html Msg
+toolbarProgram url program = 
+  div 
+    [ css
+      [ position fixed
+      , bottom (px 0)
+      , width (pct 100)
+      , color (hex "ffffff")
+      , height (px 40)
+      , backgroundColor (hex "660066")
+      , paddingLeft (px 20)
+      ] 
+    ] 
+    [ img 
+      [ src url
+      , Html.Styled.Attributes.height 40
+      , onClick (Open program)
       ] []
     ]
 
