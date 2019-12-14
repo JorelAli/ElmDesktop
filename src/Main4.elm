@@ -59,6 +59,11 @@ type alias Model =
 
 type Windows = Windows (List (Model -> Html Msg))
 
+unwrapWindow : Windows -> List (Model -> Html Msg)
+unwrapWindow w =
+  case w of
+    Windows list -> list
+
 type Msg
     = DragDropMsg (DragDrop.Msg Int Int)
     | KillWindow Int
@@ -75,10 +80,12 @@ init () =
       , imageUrl = "https://upload.wikimedia.org/wikipedia/commons/f/f3/Elm_logo.svg"
       , markdown = "# Hello world\nThis is some text"
       , windowHtmls = Windows
-        [ \model -> window (getWindow model 2) 2 "Notepad" Programs.textArea
-        , \model -> window (getWindow model 4) 4 "PrimeChecker" (primeChecker model)
+        [ \model -> window model 1 "ImgViewer" (imageContent model.imageUrl)
+        , \model -> window model 2 "Notepad" Programs.textArea
+        , \model -> window model 3 "Calculator" Programs.calculator
+        , \model -> window model 4 "PrimeChecker" (primeChecker model)
+        , \model -> window model 5 "MarkdownEditor" (markdownEditor model.markdown)
         ]
-        -- ++ window model 1 "ImgViewer" (imageContent model.imageUrl) --//Programs.imageContent
       }
     , Cmd.none
     )
@@ -143,16 +150,8 @@ view : Model -> Html Msg
 view model =
   div []
       ([ desktop model
-       ] 
-      --  ++ window model 1 "ImgViewer" (imageContent model.imageUrl) --//Programs.imageContent
-      --  ++ window (getWindow model.windows 2) 2 "Notepad" Programs.textArea
-      --  ++ window model 3 "Calculator" Programs.calculator
-      --  ++ window (getWindow model.windows 4) 4 "PrimeChecker" (primeChecker model)
-      --  ++ window model 5 "MarkdownEditor" (markdownEditor model.markdown)
-       ++ List.map (\a -> a model) (
-         case model.windowHtmls of
-          Windows a -> a
-       )
+       ]
+       ++ List.map (\w -> w model) (unwrapWindow model.windowHtmls)
       )
 
 desktop : Model -> Html Msg
@@ -171,8 +170,11 @@ desktop model =
   ]
 
 
-window : Window -> Int -> String -> Html Msg -> Html Msg
-window theWindow id title content =
+window : Model -> Int -> String -> Html Msg -> Html Msg
+window model id title content =
+  let 
+    theWindow = getWindow model id
+  in
   if theWindow.dead then div [] []
   else 
     div
