@@ -43,7 +43,7 @@ defaultWindow =
 
 getWindow : Model -> Int -> Window
 getWindow model id = 
-  case Dict.get id (model.windows) of
+  case Dict.get id model.windows of
     Nothing -> defaultWindow
     Just aWindow -> aWindow
 
@@ -54,8 +54,10 @@ type alias Model =
     , isPrime : Bool
     , imageUrl : String
     , markdown : String
+    , windowHtmls : Windows--List (Model -> Html Msg)
     }
 
+type Windows = Windows (List (Model -> Html Msg))
 
 type Msg
     = DragDropMsg (DragDrop.Msg Int Int)
@@ -72,6 +74,11 @@ init () =
       , isPrime = False
       , imageUrl = "https://upload.wikimedia.org/wikipedia/commons/f/f3/Elm_logo.svg"
       , markdown = "# Hello world\nThis is some text"
+      , windowHtmls = Windows
+        [ \model -> window (getWindow model 2) 2 "Notepad" Programs.textArea
+        , \model -> window (getWindow model 4) 4 "PrimeChecker" (primeChecker model)
+        ]
+        -- ++ window model 1 "ImgViewer" (imageContent model.imageUrl) --//Programs.imageContent
       }
     , Cmd.none
     )
@@ -137,11 +144,15 @@ view model =
   div []
       ([ desktop model
        ] 
-       ++ window model 1 "ImgViewer" (imageContent model.imageUrl) --//Programs.imageContent
-       ++ window model 2 "Notepad" Programs.textArea
-       ++ window model 3 "Calculator" Programs.calculator
-       ++ window model 4 "PrimeChecker" (primeChecker model)
-       ++ window model 5 "MarkdownEditor" (markdownEditor model.markdown)
+      --  ++ window model 1 "ImgViewer" (imageContent model.imageUrl) --//Programs.imageContent
+      --  ++ window (getWindow model.windows 2) 2 "Notepad" Programs.textArea
+      --  ++ window model 3 "Calculator" Programs.calculator
+      --  ++ window (getWindow model.windows 4) 4 "PrimeChecker" (primeChecker model)
+      --  ++ window model 5 "MarkdownEditor" (markdownEditor model.markdown)
+       ++ List.map (\a -> a model) (
+         case model.windowHtmls of
+          Windows a -> a
+       )
       )
 
 desktop : Model -> Html Msg
@@ -151,7 +162,6 @@ desktop model =
       [ width (pct 100) 
       , height (pct 100)
       , position absolute
-      -- , top (px 50)
       , left (px 0)
       , overflow hidden
       , backgroundColor (hex "360036")
@@ -161,16 +171,16 @@ desktop model =
   ]
 
 
-window : Model -> Int -> String -> Html Msg -> List (Html Msg)
-window model id title content =
-  if (getWindow model id).dead then []
+window : Window -> Int -> String -> Html Msg -> Html Msg
+window theWindow id title content =
+  if theWindow.dead then div [] []
   else 
-    [ div
+    div
       [ css 
         [ divStyle
         , position fixed
-        , left (px <| toFloat (getWindow model id).pos.x)
-        , top (px <| toFloat (getWindow model id).pos.y)
+        , left (px <| toFloat theWindow.pos.x)
+        , top (px <| toFloat theWindow.pos.y)
         , resize both
         ]
       ]
@@ -234,7 +244,7 @@ window model id title content =
         ]
       , content
       ]
-    ]
+    
   
 
 toolbar : Html Msg
