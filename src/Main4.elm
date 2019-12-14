@@ -91,7 +91,7 @@ init () =
         , \model -> window model 2 "Notepad" Programs.textArea
         , \model -> window model 3 "Calculator" Programs.calculator
         -- , \model -> window model 4 "PrimeChecker" (primeChecker model)
-        , \model -> window model 5 "MarkdownEditor" (markdownEditor model.markdown)
+        , \model -> window model 4 "MarkdownEditor" (markdownEditor model.markdown)
         ]
       }
     , Cmd.none
@@ -144,8 +144,12 @@ update msg model =
         Open programType ->
           case programType of
             PrimeProgram ->
-              ({model | windowHtmls = Windows ((unwrapWindow model.windowHtmls) ++ 
-                [\m -> window m 4 "PrimeChecker" (primeChecker m)]
+              ({
+                model 
+                | windowHtmls 
+                  = Windows ((unwrapWindow model.windowHtmls) 
+                  ++ [\m -> window m 
+                ((+) 1 <| List.length <| unwrapWindow model.windowHtmls) "PrimeChecker" (primeChecker m)]
               )}, Cmd.none)
             
             ImageViewerProgram ->
