@@ -151,7 +151,7 @@ desktop model =
       [ width (pct 100) 
       , height (pct 100)
       , position absolute
-      , top (px 50)
+      -- , top (px 50)
       , left (px 0)
       , overflow hidden
       , backgroundColor (hex "360036")
