@@ -5,8 +5,11 @@ import Browser
 -- import Html.Attributes exposing (..)
 -- import Html.Events exposing (..)
 
+import Css exposing (..)
+
 import Html.Styled exposing (Html, div, textarea, text, button, img, br, input)
-import Html.Styled.Attributes exposing (..)
+
+import Html.Styled.Attributes exposing (css, src, placeholder)
 import Html.Styled.Events exposing (..)
 import Html5.DragDrop as DragDrop
 import Json.Decode exposing (Value)
@@ -142,7 +145,8 @@ subscriptions model =
 
 -- divStyle : List (Attribute Msg)
 divStyle =
-    [ style "z-index" "1"
+  Css.batch
+    [ zIndex (int 1)
     ]
 
 view : Model -> Html Msg
@@ -160,13 +164,15 @@ view model =
 desktop : Model -> Html Msg
 desktop model =
   div (
-    [ style "width" "100%"
-    , style "height" "100%"
-    , style "position" "absolute"
-    , style "top" "50"
-    , style "left" "0"
-    , style "overflow" "hidden"
-    , style "background-color" "#360036"
+    [ css 
+      [ width (pct 100) 
+      , height (pct 100)
+      , position absolute
+      , top (px 50)
+      , left (px 0)
+      , overflow hidden
+      , backgroundColor (hex "360036")
+      ] 
   ] ++ List.map Html.Styled.Attributes.fromUnstyled (DragDrop.droppable DragDropMsg 1))
   [ toolbar
   ]
@@ -177,37 +183,57 @@ window model id title content =
   if (getWindow model id).dead then []
   else 
     [ div
-      (  style "position" "fixed"
-      :: style "left" (String.fromInt (getWindow model id).pos.x ++ "px")
-      :: style "top" (String.fromInt (getWindow model id).pos.y ++ "px")
-      :: style "resize" "both"
-      :: divStyle
-      )
+      [ css 
+        [ divStyle
+        , position fixed
+        , left (px <| toFloat (getWindow model id).pos.x)
+        , top (px <| toFloat (getWindow model id).pos.y)
+        , resize both
+        ]
+      ]
+      -- (  style "position" "fixed"
+      -- :: style "left" (String.fromInt (getWindow model id).pos.x ++ "px")
+      -- :: style "top" (String.fromInt (getWindow model id).pos.y ++ "px")
+      -- :: style "resize" "both"
+      -- :: divStyle
+      -- )
       [ div 
-        ([ width 100
-        , style "background-color" (if (getWindow model id).hovering then "#880088" else "#660066")
-        , style "color" "#ffffff"
-        , style "font-family" "Arial"
-        , style "display" "flex"
+        ([ Html.Styled.Attributes.width 100
+        , css 
+          [ backgroundColor (if (getWindow model id).hovering then hex "880088" else hex "660066")
+          , color (hex "ffffff")
+          , fontFamilies [ "Arial" ] 
+          , displayFlex
+          ]
+        -- , style "background-color" (if (getWindow model id).hovering then "#880088" else "#660066")
+        -- , style "color" "#ffffff"
+        -- , style "font-family" "Arial"
+        -- , style "display" "flex"
         , onMouseOver (Hovering id)
         , onMouseOut (NotHovering id)
         ] ++ List.map Html.Styled.Attributes.fromUnstyled (DragDrop.draggable DragDropMsg id)) 
         [ div 
-          [ style "padding" "10px"
-          ] 
+          [ css 
+            [ padding (px 10)
+            ] 
+          ]
           [ text title
           ]
         , div 
-          [ style "text-align" "right"
-          , style "width" "100%"
+          [ css 
+            [ textAlign right
+            , width (pct 100)
+            ]
           ] 
           [ button 
             [ onClick (KillWindow id)
-            , style "background-color" "#ff6600"
-            , style "border" "none"
-            , style "color" "#ffffff"
-            , style "height" "100%"
-            , style "width" "40px"
+            , css
+              [ backgroundColor (hex "ff6600")
+              , border zero
+              , color (hex "ffffff")
+              , height (pct 100)
+              , width (px 40)
+              ]
             ] [ text "—"] 
           -- , button 
           --   [ onClick (KillWindow id)
@@ -218,32 +244,37 @@ window model id title content =
           --   ] [ text "◻"] 
           , button 
             [ onClick (KillWindow id)
-            , style "background-color" "#ff0000"
-            , style "border" "none"
-            , style "color" "#ffffff"
-            , style "height" "100%"
-            , style "width" "40px"
+            , css 
+              [ backgroundColor (hex "ff0000")
+              , border zero
+              , color (hex "ffffff")
+              , height (pct 100)
+              , width (px 40)
+              ]
             ] [ text "✕"] 
           ] 
         ]
       , content
       ]
     ]
+  
 
 toolbar : Html Msg
 toolbar = 
   div 
-    [ style "position" "fixed"
-    , style "bottom" "0"
-    , style "width" "100%"
-    , style "color" "#ffffff"
-    , style "height" "40px"
-    , style "background-color" "#660066"
+    [ css
+      [ position fixed
+      , bottom (px 0)
+      , width (pct 100)
+      , color (hex "ffffff")
+      , height (px 40)
+      , backgroundColor (hex "660066")
+      ] 
     ] 
     [ 
       img 
       [ src Images.nix
-      , height 40
+      , Html.Styled.Attributes.height 40
       ] []
     ]
 
@@ -253,26 +284,32 @@ toolbar =
 primeChecker : Model -> Html Msg
 primeChecker model = 
   div 
-    [ style "color" "#ffffff"
-    , style "font-family" "Arial"
-    , style "padding" "10px"
-    , style "background-color" "#660066"
+    [ css 
+      [ color (hex "ffffff")
+      , fontFamilies [ "Arial" ]
+      , padding (px 10)
+      , backgroundColor (hex "660066")
+      ]
     ]
     [ input 
       [ onInput (\str -> IsPrime (String.toInt str |> Maybe.withDefault 2)) 
       , placeholder "int"
-      , style "width" "100%"
-      , style "font-size" "16pt"
-      , style "border" "none"
-      , style "text-align" "center"
+      , css
+        [ width (pct 100)
+        , fontSize (pt 16)
+        , border zero
+        , textAlign center
+        ]
       ] []
     , br [] []
     , div 
-      [ style "background-color" (if model.isPrime then pastel.green else pastel.red)
-      , style "padding" "5px"
-      , style "text-align" "center"
-      , style "margin-top" "10px"
-      , style "color" "#000000"
+      [ css
+        [ backgroundColor (hex (if model.isPrime then pastel.green else pastel.red))
+        , padding (px 5)
+        , textAlign center
+        , marginTop (px 10)
+        , color (hex "000000")
+        ]
       ] 
       [ text (if model.isPrime then "This is prime!" else "This is not prime")
       ]
@@ -281,18 +318,20 @@ primeChecker model =
 imageContent : String -> Html Msg
 imageContent url = 
   div 
-  [ style "resize" "both"
-  , style "overflow" "auto"
+  [ css 
+    [ resize both
+    , overflow auto
+    ]
   ]
   [ input 
     [ placeholder "url"
     , onInput ChangeImageUrl
-    , style "width" "100%"
+    , css [ width (pct 100) ]
     ] 
     []
   , img
     [ src url
-    , style "width" "100%"
+    , css [ width (pct 100) ]
     -- , width 200
     ] []
   ]
@@ -300,31 +339,37 @@ imageContent url =
 markdownEditor : String -> Html Msg
 markdownEditor md = 
   div 
-  [ style "background-color" pastel.blue
-  , style "display" "flex"
-  , style "align-items" "stretch"
-  , style "font-family" "Arial"
+  [ css
+    [ backgroundColor (hex pastel.blue)
+    , displayFlex
+    , alignItems stretch
+    , fontFamilies [ "Arial" ]
+    ]
   ] 
   [ textarea 
     [ placeholder md
     , onInput UpdateMarkdown
-    , style "overflow" "auto"
-    , style "height" "100%"
+    , css
+      [ overflow auto
+      , height (pct 100)
+      ]
     ] []
   , div 
-    [ style "margin-left" "20px"
-    , style "margin-right" "20px"
+    [ css
+      [ marginLeft (px 20)
+      , marginRight (px 20)
+      ]
     ] <| List.map Html.Styled.fromUnstyled (Markdown.toHtml Nothing md)
   ]
 
 --Main
 
 pastel = 
-  { red = "#ffb3ba"
-  , orange = "#ffdfba"
-  , yellow = "#ffffba"
-  , green = "#baffc9"
-  , blue = "#bae1ff"
+  { red = "ffb3ba"
+  , orange = "ffdfba"
+  , yellow = "ffffba"
+  , green = "baffc9"
+  , blue = "bae1ff"
   }
 
 main : Program () Model Msg
