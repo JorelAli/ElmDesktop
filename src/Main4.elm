@@ -7,6 +7,8 @@ import Html.Events exposing (..)
 import Html5.DragDrop as DragDrop
 import Json.Decode exposing (Value)
 import Dict exposing (Dict)
+import Programs
+import Images
 
 port dragstart : Value -> Cmd msg
 
@@ -119,24 +121,27 @@ divStyle =
 
 view : Model -> Html Msg
 view model =
-    div []
-        ([ desktop 
-        ] ++ window model 1 "a" imageContent
-          ++ window model 2 "Notepad" textArea)
+  div []
+      ([ desktop model
+       ] 
+       ++ window model 1 "ElmIcon" Programs.imageContent
+       ++ window model 2 "Notepad" Programs.textArea
+       ++ window model 3 "Calculator" Programs.calculator
+      )
 
-desktop : Html Msg
-desktop =
+desktop : Model -> Html Msg
+desktop model =
   div (
-    [ style "border" "1px solid black"
-    , style "padding" "50px"
-    , style "width" "100%"
+    [ style "width" "100%"
     , style "height" "100%"
     , style "position" "absolute"
     , style "top" "50"
     , style "left" "0"
-    , style "background-color" "#0000ff"
+    , style "overflow" "hidden"
+    , style "background-color" "#360036"
   ] ++ DragDrop.droppable DragDropMsg 1)
-  []
+  [ toolbar
+  ]
 
 
 window : Model -> Int -> String ->Html Msg -> List (Html Msg)
@@ -144,7 +149,7 @@ window model id title content =
   if (getWindow model id).dead then []
   else 
     [ div
-      (  style "position" "absolute"
+      (  style "position" "fixed"
       :: style "left" (String.fromInt (getWindow model id).pos.x ++ "px")
       :: style "top" (String.fromInt (getWindow model id).pos.y ++ "px")
       :: style "resize" "both"
@@ -152,37 +157,67 @@ window model id title content =
       )
       [ div 
         ([ width 100
-        , style "background-color" (if (getWindow model id).hovering then "#ff0000" else "#00ff00")
-        , style "padding" "10px"
+        , style "background-color" (if (getWindow model id).hovering then "#880088" else "#660066")
+        , style "color" "#ffffff"
+        , style "font-family" "Arial"
         , style "display" "flex"
         , onMouseOver (Hovering id)
         , onMouseOut (NotHovering id)
         ] ++ DragDrop.draggable DragDropMsg id) 
-        [ text title
+        [ div 
+          [ style "padding" "10px"
+          ] 
+          [ text title
+          ]
         , div 
           [ style "text-align" "right"
           , style "width" "100%"
           ] 
-          [ button [ onClick (KillWindow id)] [ text "X"] ]
-        
-          
+          [ button 
+            [ onClick (KillWindow id)
+            , style "background-color" "#ff6600"
+            , style "border" "none"
+            , style "color" "#ffffff"
+            , style "height" "100%"
+            , style "width" "40px"
+            ] [ text "—"] 
+          -- , button 
+          --   [ onClick (KillWindow id)
+          --   , style "background-color" "#ff0000"
+          --   , style "border" "none"
+          --   , style "color" "#ffffff"
+          --   , style "height" "100%"
+          --   ] [ text "◻"] 
+          , button 
+            [ onClick (KillWindow id)
+            , style "background-color" "#ff0000"
+            , style "border" "none"
+            , style "color" "#ffffff"
+            , style "height" "100%"
+            , style "width" "40px"
+            ] [ text "✕"] 
+          ] 
         ]
       , content
       ]
     ]
 
-
-textArea : Html Msg
-textArea =
-  textarea [] [text "hi"]
-
-imageContent : Html Msg
-imageContent = 
-  img
-    [ src "https://upload.wikimedia.org/wikipedia/commons/f/f3/Elm_logo.svg" 
-    , width 100 
-    ] []
-
+toolbar : Html Msg
+toolbar = 
+  div 
+    [ style "position" "fixed"
+    , style "bottom" "0"
+    , style "width" "100%"
+    , style "color" "#ffffff"
+    , style "height" "40px"
+    , style "background-color" "#660066"
+    ] 
+    [ 
+      img 
+      [ src Images.nix
+      , height 40
+      ] []
+    ]
 
 main : Program () Model Msg
 main =
