@@ -29,7 +29,6 @@ type alias Position =
 
 type alias Window = 
   { pos : Position
-  , hovering : Bool
   , dead : Bool
   }
 
@@ -39,7 +38,6 @@ defaultWindow =
     { x = 0
     , y = 0
     }
-    , hovering = False
     , dead = False
   }
 
@@ -61,8 +59,6 @@ type alias Model =
 
 type Msg
     = DragDropMsg (DragDrop.Msg Int Int)
-    | Hovering Int
-    | NotHovering Int
     | KillWindow Int
     | IsPrime Int
     | ChangeImageUrl String
@@ -101,7 +97,6 @@ update msg model =
                             { x = newPos.x
                             , y = newPos.y
                             }
-                            , hovering = (getWindow model id).hovering
                             , dead = (getWindow model id).dead
                           } model.windows
               }
@@ -109,18 +104,6 @@ update msg model =
                 |> Maybe.map (.event >> dragstart)
                 |> Maybe.withDefault Cmd.none
             )
-
-        Hovering id -> 
-          let 
-            cWin = getWindow model id
-          in
-            ({model | windows = Dict.insert id {cWin | hovering = True} model.windows }, Cmd.none)
-
-        NotHovering id -> 
-          let 
-            cWin = getWindow model id
-          in
-            ({model | windows = Dict.insert id {cWin | hovering = False} model.windows  }, Cmd.none)
 
         KillWindow id -> 
           let 
@@ -191,26 +174,21 @@ window model id title content =
         , resize both
         ]
       ]
-      -- (  style "position" "fixed"
-      -- :: style "left" (String.fromInt (getWindow model id).pos.x ++ "px")
-      -- :: style "top" (String.fromInt (getWindow model id).pos.y ++ "px")
-      -- :: style "resize" "both"
-      -- :: divStyle
-      -- )
       [ div 
         ([ Html.Styled.Attributes.width 100
         , css 
-          [ backgroundColor (if (getWindow model id).hovering then hex "880088" else hex "660066")
+          [ backgroundColor (hex "660066")
           , color (hex "ffffff")
           , fontFamilies [ "Arial" ] 
           , displayFlex
+          , hover [
+            backgroundColor (hex "880088")
+          ]
           ]
         -- , style "background-color" (if (getWindow model id).hovering then "#880088" else "#660066")
         -- , style "color" "#ffffff"
         -- , style "font-family" "Arial"
         -- , style "display" "flex"
-        , onMouseOver (Hovering id)
-        , onMouseOut (NotHovering id)
         ] ++ List.map Html.Styled.Attributes.fromUnstyled (DragDrop.draggable DragDropMsg id)) 
         [ div 
           [ css 
@@ -271,8 +249,7 @@ toolbar =
       , backgroundColor (hex "660066")
       ] 
     ] 
-    [ 
-      img 
+    [ img 
       [ src Images.nix
       , Html.Styled.Attributes.height 40
       ] []
