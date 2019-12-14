@@ -1,9 +1,13 @@
 port module Main4 exposing (..)
 
 import Browser
-import Html exposing (..)
-import Html.Attributes exposing (..)
-import Html.Events exposing (..)
+-- import Html exposing (..)
+-- import Html.Attributes exposing (..)
+-- import Html.Events exposing (..)
+
+import Html.Styled exposing (Html, div, textarea, text, button, img, br, input)
+import Html.Styled.Attributes exposing (..)
+import Html.Styled.Events exposing (..)
 import Html5.DragDrop as DragDrop
 import Json.Decode exposing (Value)
 import Dict exposing (Dict)
@@ -136,7 +140,7 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.none
 
-divStyle : List (Attribute Msg)
+-- divStyle : List (Attribute Msg)
 divStyle =
     [ style "z-index" "1"
     ]
@@ -163,7 +167,7 @@ desktop model =
     , style "left" "0"
     , style "overflow" "hidden"
     , style "background-color" "#360036"
-  ] ++ DragDrop.droppable DragDropMsg 1)
+  ] ++ List.map Html.Styled.Attributes.fromUnstyled (DragDrop.droppable DragDropMsg 1))
   [ toolbar
   ]
 
@@ -187,7 +191,7 @@ window model id title content =
         , style "display" "flex"
         , onMouseOver (Hovering id)
         , onMouseOut (NotHovering id)
-        ] ++ DragDrop.draggable DragDropMsg id) 
+        ] ++ List.map Html.Styled.Attributes.fromUnstyled (DragDrop.draggable DragDropMsg id)) 
         [ div 
           [ style "padding" "10px"
           ] 
@@ -298,16 +302,19 @@ markdownEditor md =
   div 
   [ style "background-color" pastel.blue
   , style "display" "flex"
+  , style "align-items" "stretch"
   , style "font-family" "Arial"
   ] 
   [ textarea 
     [ placeholder md
     , onInput UpdateMarkdown
+    , style "overflow" "auto"
+    , style "height" "100%"
     ] []
   , div 
     [ style "margin-left" "20px"
     , style "margin-right" "20px"
-    ] <| Markdown.toHtml Nothing md
+    ] <| List.map Html.Styled.fromUnstyled (Markdown.toHtml Nothing md)
   ]
 
 --Main
@@ -326,5 +333,5 @@ main =
         { init = init
         , update = update
         , subscriptions = subscriptions
-        , view = view
+        , view = view >> Html.Styled.toUnstyled 
         }
