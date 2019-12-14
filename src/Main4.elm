@@ -41,10 +41,18 @@ defaultWindow =
     , dead = False
   }
 
+defaultCascadeWindow : Model -> Int -> Window
+defaultCascadeWindow model int =
+  if List.isEmpty (List.filter (\win -> win.pos.x == int && win.pos.y == int) (Dict.values model.windows)) then
+    { defaultWindow | pos = { x = int, y = int }}
+  else
+    defaultCascadeWindow model (int + 20)
+
+
 getWindow : Model -> Int -> Window
 getWindow model id = 
   case Dict.get id model.windows of
-    Nothing -> defaultWindow
+    Nothing -> defaultCascadeWindow model 0
     Just aWindow -> aWindow
 
 
@@ -55,6 +63,7 @@ type alias Model =
     , imageUrl : String
     , markdown : String
     , windowHtmls : Windows--List (Model -> Html Msg)
+    , windowCounter : Int
     }
 
 type Windows 
@@ -68,6 +77,7 @@ unwrapWindow w =
 type ProgramType
   = PrimeProgram
   | ImageViewerProgram
+  | MarkdownProgram
 
 
 type Msg
@@ -81,18 +91,24 @@ type Msg
 
 init : () -> (Model, Cmd msg)
 init () =
+  let
+    defaultWindows = []
+
+  in
     ( { windows = Dict.empty
       , dragDrop = DragDrop.init
       , isPrime = False
       , imageUrl = "https://upload.wikimedia.org/wikipedia/commons/f/f3/Elm_logo.svg"
       , markdown = "# Hello world\nThis is some text"
-      , windowHtmls = Windows
-        [ \model -> window model 1 "ImgViewer" (imageContent model.imageUrl)
-        , \model -> window model 2 "Notepad" Programs.textArea
-        , \model -> window model 3 "Calculator" Programs.calculator
+      , windowHtmls = Windows --https://cdn3.iconfinder.com/data/icons/business-office-and-internet-4/512/154-512.png
+        [ 
+        --   \model -> window model 1 "ImgViewer" (imageContent model.imageUrl)
+        -- , \model -> window model 2 "Notepad" Programs.textArea
+        -- , \model -> window model 3 "Calculator" Programs.calculator
         -- , \model -> window model 4 "PrimeChecker" (primeChecker model)
-        , \model -> window model 4 "MarkdownEditor" (markdownEditor model.markdown)
+        -- , \model -> window model 4 "MarkdownEditor" (markdownEditor model.markdown)
         ]
+      , windowCounter = List.length defaultWindows
       }
     , Cmd.none
     )
@@ -130,7 +146,10 @@ update msg model =
           let 
             cWin = getWindow model id
           in
-            ({model | windows = Dict.insert id {cWin | dead = True} model.windows  }, Cmd.none)
+            ({ model 
+            | windows = Dict.insert id {cWin | dead = True} model.windows
+            , windowCounter = model.windowCounter - 1 
+            }, Cmd.none)
 
         IsPrime int ->
           ({model | isPrime = isPrime int}, Cmd.none)
@@ -142,18 +161,34 @@ update msg model =
           ({model | markdown = str}, Cmd.none)
 
         Open programType ->
+          let 
+            id : Int
+            id = model.windowCounter + 1
+
+            newWindows : Dict Int Window
+            newWindows = Dict.insert id (defaultCascadeWindow model 0) model.windows
+
+            windowOf : (Model -> Html Msg) -> Windows
+            windowOf theWindow = Windows (theWindow :: unwrapWindow model.windowHtmls)
+
+            newModel : Model
+            newModel = {model | windowCounter = id, windows = newWindows}
+          in
           case programType of
             PrimeProgram ->
-              ({
-                model 
-                | windowHtmls 
-                  = Windows ((unwrapWindow model.windowHtmls) 
-                  ++ [\m -> window m 
-                ((+) 1 <| List.length <| unwrapWindow model.windowHtmls) "PrimeChecker" (primeChecker m)]
-              )}, Cmd.none)
+              ({ newModel 
+                | windowHtmls = windowOf <| \m -> window m id "PrimeChecker" (primeChecker m)
+                }, Cmd.none)
             
             ImageViewerProgram ->
-              (model, Cmd.none)
+              ({ newModel
+                | windowHtmls = windowOf <| \m -> window m id "ImageViewer" (imageContent m.imageUrl)
+                }, Cmd.none)
+
+            MarkdownProgram ->
+              ({ newModel 
+                | windowHtmls = windowOf <| \m -> window m id "MarkdownEditor" (markdownEditor "# Hello world\nThis is some text")
+                }, Cmd.none)
 
 
 
@@ -187,8 +222,13 @@ desktop model =
       , backgroundColor (hex "360036")
       ] 
   ] ++ List.map Html.Styled.Attributes.fromUnstyled (DragDrop.droppable DragDropMsg 1))
-  [ toolbar
-  , toolbarProgram "https://upload.wikimedia.org/wikipedia/commons/f/f3/Elm_logo.svg" PrimeProgram
+  [ toolbar 
+    [ toolbarProgram "https://cdn6.aptoide.com/imgs/8/4/7/847c8365bb7de7ddd51f5461f2aab402_icon.png?w=240" PrimeProgram
+    , toolbarProgram "https://cdn0.iconfinder.com/data/icons/octicons/1024/markdown-512.png" MarkdownProgram
+    , toolbarProgram "https://cdn3.iconfinder.com/data/icons/business-office-and-internet-4/512/154-512.png" ImageViewerProgram
+    --
+    --\model -> window model 1 "ImgViewer" (imageContent model.imageUrl)
+    ]
   ]
 
 
@@ -271,8 +311,8 @@ window model id title content =
     
   
 
-toolbar : Html Msg
-toolbar = 
+toolbar : List (Html Msg) -> Html Msg
+toolbar items = 
   div 
     [ css
       [ position fixed
@@ -281,22 +321,27 @@ toolbar =
       , color (hex "ffffff")
       , height (px 40)
       , backgroundColor (hex "660066")
+      , displayFlex
       ] 
     ] 
     [ img 
       [ src Images.nix
       , Html.Styled.Attributes.height 40
       ] []
+    , div 
+      [ css 
+        [ displayFlex
+        , width (pct 100)
+        ]
+      ]
+      items
     ]
 
 toolbarProgram : String -> ProgramType -> Html Msg
 toolbarProgram url program = 
   div 
     [ css
-      [ position fixed
-      , bottom (px 0)
-      , width (pct 100)
-      , color (hex "ffffff")
+      [ color (hex "ffffff")
       , height (px 40)
       , backgroundColor (hex "660066")
       , paddingLeft (px 20)
