@@ -2,6 +2,9 @@ module Programs exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (..)
+
+
 
 textArea : Html msg
 textArea =
